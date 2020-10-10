@@ -1,3 +1,6 @@
+from OpenCV.SendCommands import move_shark_left, move_shark_right
+
+
 class MorseDecoder:
     MORSE_CODE_DICT = {'A': '.-', 'B': '-...',
                        'C': '-.-.', 'D': '-..', 'E': '.',
@@ -58,6 +61,7 @@ class MorseDecoder:
             if self.offTime >= self.blank:
                 if self.currentWord != "":
                     self.message.append(self.currentWord)
+                    self.Move_Check()
                     self.currentWord = ""
 
     def Get_Message(self):
@@ -67,3 +71,17 @@ class MorseDecoder:
             text_message += self.decrypt[i]
 
         return text_message
+
+    def Move_Check(self):
+        if self.currentWord == "": return
+
+        decoded_message = self.decrypt[self.currentWord]
+
+        if decoded_message == "L":
+            print("Move L")
+            move_shark_left()
+            self.currentWord = ""
+        elif decoded_message == "R":
+            print("Move R")
+            move_shark_right()
+            self.currentWord = ""
