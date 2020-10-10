@@ -15,16 +15,6 @@ circle_detector_p2_threshold = 12
 circle_max_radius = 300
 memory_weight_decrease = 3
 
-# Averaging the circle - Variables
-buffer_size = 10
-tx_pos_buffer = []
-outlier_distance = 100
-skipped_outliers = 0
-skips_to_forget_buffer = 5
-avg_circle = (0, 0, 0)
-
-
-
 
 def blur_image(Frame):
     """
@@ -57,7 +47,7 @@ def get_all_circles(Frame, min_radius=2):
                             maxRadius=circle_max_radius)
 
 
-def circle_memory_buffer(Frame, Draw=False):
+def circle_memory_buffer(tx_pos_buffer, avg_circle, Frame, Draw=False):
     """
     Find average of the circle memory buffer
     :rtype: object -> tx_pos_buffer
@@ -68,10 +58,10 @@ def circle_memory_buffer(Frame, Draw=False):
         avg_circle = np.sum([np.multiply(tx_pos_buffer[x], geom[length - x - 1]) for x in range(length)],
                             axis=0) / sum(geom)
         x, y, r = avg_circle
-        print(tx_pos_buffer)
 
         if Draw:
             cv2.circle(Frame, (int(x), int(y)), int(r), red, 3)
+    return avg_circle
 
 
 def is_outlier(tx_pos, new_circle, threshold):

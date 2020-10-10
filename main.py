@@ -1,10 +1,24 @@
-from Hackaton.Src.CameraModuls import *
+from Src.CameraModuls import *
+from Src.MorseCode import *
 
 if __name__ == '__main__':
     # Arguments
-    capture = cv2.VideoCapture(2)
+    capture = cv2.VideoCapture(0)
     height, width, channels = capture.read()[1].shape
     debug = True
+
+    use_box_area_average = False
+    box_size = 60
+    w = h = box_size
+    decoder = MorseDecoder(8, 4, 8)
+
+    # Averaging the circle - Variables
+    buffer_size = 10
+    tx_pos_buffer = []
+    outlier_distance = 100
+    skipped_outliers = 0
+    skips_to_forget_buffer = 5
+    avg_circle = (0, 0, 0)
 
     # If didn't detect camera
     if not capture.isOpened:
@@ -28,13 +42,11 @@ if __name__ == '__main__':
         # Then we put the blur back on
         blur = median_blur_image(Frame=threshed_gray_image)
 
-        cv2.imshow(default_window_name, blur)
-
         # Finds all circles
         circles = get_all_circles(blur)
 
         # to Find Circles in Memory Buffer |
-        circle_memory_buffer(Frame=current_frame, Draw=True)
+        avg_circle = circle_memory_buffer(tx_pos_buffer=tx_pos_buffer, avg_circle=avg_circle, Frame=current_frame, Draw=True)
 
         if circles is not None:
             new_circles = np.uint16(np.around(circles))
@@ -54,15 +66,30 @@ if __name__ == '__main__':
                 tx_pos_buffer.append((x, y, r))
                 if len(tx_pos_buffer) > buffer_size:
                     tx_pos_buffer.pop(0)
+        if sum(avg_circle) > 0:
+            # Decode signal
+            x, y, r = avg_circle
+            x, y, r = int(x), int(y), int(r)
+            if debug:
+                current_frame = cv2.rectangle(current_frame, (x-w, y-h), (x + w, y + h), green, 2)
+
+            if use_box_area_average:
+                mask = np.zeros(current_frame.shape[:2], np.uint8)
+                mask[y - h:y + h, x - w:x + w] = 255
+                mean = cv2.mean(blur, mask=mask)[:3]
+                decoder.Send(mean[0] >= 255 / 2)
+            else:
+                decoder.Send(blur[y, x] >= 255 / 2)
 
         # ==========Other Things==========
         # Only works while debug = True
         if debug:
             cv2.imshow('Original', current_frame)
-            cv2.imshow('Circle Detector', threshed_gray_image)
+            cv2.imshow('Circle Detector', blur)
 
         # Exits when pressed ESC
         if cv2.waitKey(1) == 27:
+            print(f"\n{decoder.Get_Message()}")
             break
 
     capture.release()
