@@ -22,6 +22,12 @@ if __name__ == '__main__':
     green = (0, 255, 0)
     thickness = 2
 
+    # Averaging Arguments
+    circle_detector_p1 = 60
+    circle_detector_p2_threshold = 12
+    circle_max_radius = 300
+    memory_weight_decrease = 3
+
     # Averaging the circle - Variables
     buffer_size = 10
     tx_pos_buffer = []
@@ -53,12 +59,13 @@ if __name__ == '__main__':
 
         # Finds all circles
         circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 20,
-                                   param1=70, param2=13, minRadius=2, maxRadius=300)
+                                   param1=circle_detector_p1, param2=circle_detector_p2, minRadius=2,
+                                   maxRadius=circle_max_radius)
 
         # Find average of the circle memory buffer
         length = len(tx_pos_buffer)
         if length > 0:
-            geom = [1 / 4 ** x for x in range(length)]
+            geom = [1 / memory_weight_decrease ** x for x in range(length)]
             avg_circle = np.sum([np.multiply(tx_pos_buffer[x], geom[length - x - 1]) for x in range(length)],
                                 axis=0) / sum(geom)
             x, y, r = avg_circle
