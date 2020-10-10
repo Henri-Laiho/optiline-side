@@ -11,7 +11,7 @@ x = int(width / 2 - box_size / 2)
 y = int(height / 2 - box_size / 2)
 w = h = box_size
 
-decoder = MorseDecoder()
+decoder = MorseDecoder(long=10, short=5, blank=10)
 
 while (True):
     gray = cv2.medianBlur(cv2.cvtColor(cap.read()[1], cv2.COLOR_BGR2GRAY), 5)

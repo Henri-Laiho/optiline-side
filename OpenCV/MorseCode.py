@@ -22,12 +22,13 @@ class MorseDecoder:
     onTime = 0
     offTime = 0
 
-    long = 10
-    short = 5
-    blank = 10
-
     currentWord = ""
     message = []
+
+    def __init__(self, long, short, blank):
+        self.long = long
+        self.short = short
+        self.blank = blank
 
     def Send(self, value):
         if value:
