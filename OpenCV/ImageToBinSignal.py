@@ -28,14 +28,6 @@ x = int(width / 2 - box_size / 2)
 y = int(height / 2 - box_size / 2)
 w = h = box_size
 
-sampleRate = 44100.0  # hertz
-duration = 1.0  # seconds
-frequency = 440.0  # hertz
-obj = wave.open('sound.wav', 'w')
-obj.setnchannels(1)  # mono
-obj.setsampwidth(2)
-obj.setframerate(sampleRate)
-
 lastFrameWasOn = False
 lastFrameWasOff = False
 onTime = 0
