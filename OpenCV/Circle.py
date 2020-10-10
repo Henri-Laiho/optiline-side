@@ -1,3 +1,6 @@
+# Code moved to main.py
+'''
+
 import cv2
 import numpy as np
 import sys
@@ -69,3 +72,4 @@ while (True):
         break
 cap.release()
 cv2.destroyAllWindows()
+'''
