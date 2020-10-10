@@ -1,9 +1,16 @@
 import cv2
+import numpy as np
 
 if __name__ == '__main__':
     # Arguments
     capture = cv2.VideoCapture(0)
+    height, width, channels = capture.read()[1].shape
     debug = True
+    default_window_name = "DEFAULT_NAME"
+    square_size_big = 30
+    square_size_small = 20
+    color = (255, 0, 0)
+    thickness = 2
 
     # If didn't detect camera
     if not capture.isOpened:
@@ -29,6 +36,22 @@ if __name__ == '__main__':
         circles = cv2.HoughCircles(blur, cv2.HOUGH_GRADIENT, 1, 20,
                                    param1=50, param2=15, minRadius=2, maxRadius=300)
 
+        # If it finds circles
+        if circles is not None:
+            new_image = cv2.medianBlur(cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY), 5)
+            new_circles = np.uint16(np.around(circles))
+            # Here it creates squares
+            for item in new_circles[0, :]:
+                # Rectangular Arguments
+                starting_point = (item[0] - square_size_big, item[1] - square_size_big)
+                ending_point = (item[0] + square_size_big, item[1] + square_size_big)
+
+                # Shows new image
+                rectangle_position = cv2.rectangle(new_image, starting_point, ending_point, color, thickness)
+                cv2.imshow(default_window_name, rectangle_position)
+            for item in new_circles[0, :]:
+                hello = cv2.imshow(default_window_name, cv2.circle(new_image, (item[0], item[1]), item[2], color))
+
         # ==========For Debuging==========
         # Only works while debug = True
         if debug:
@@ -37,18 +60,6 @@ if __name__ == '__main__':
             cv2.imshow('Threshed Gray Image', threshed_gray_image)
 
         # ==========Other Things==========
-        # Prints out all circles
-        if circles is not None:
-            circle_count = 0
-            for circle in circles[0, :]:
-                circle_count += 1
-                x = circle[0]
-                y = circle[1]
-                w = h = int(x * y)
-                print(f"Circle{circle_count} at:\n"
-                      f"\tX: {x}"
-                      f"\tY: {y}")
-                cv2.imshow("img", current_frame)
         # Exits when pressed ESC
         if cv2.waitKey(1) == 27:
             break
