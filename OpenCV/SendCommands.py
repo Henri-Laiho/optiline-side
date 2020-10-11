@@ -18,6 +18,7 @@ def move_shark_left():
         try:
             socket.send(b"L")
             message = socket.recv()
+
             print(f"Received reply [ {message} ]")
             break
         except Exception as e:
