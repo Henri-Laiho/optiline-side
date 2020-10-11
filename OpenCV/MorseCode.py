@@ -33,7 +33,7 @@ class MorseDecoder:
         self.short = short
         self.blank = blank
 
-    def Send(self, value):
+    def send(self, value):
         if value:
             self.lastFrameWasOn = True
             self.onTime += 1
@@ -64,24 +64,26 @@ class MorseDecoder:
                     self.Move_Check()
                     self.currentWord = ""
 
-    def Get_Message(self):
+    def get_message(self):
         text_message = ""
 
         for i in MorseDecoder.message:
-            text_message += self.decrypt[i]
+            if i in self.decrypt:
+                text_message += self.decrypt[i]
 
         return text_message
 
     def Move_Check(self):
-        if self.currentWord == "": return
+        if self.currentWord == "" or self.currentWord not in self.decrypt: return
 
         decoded_message = self.decrypt[self.currentWord]
 
-        if decoded_message == "L":
-            print("Move L")
+        if decoded_message == "S":
+            print("Move l")
             move_shark_left()
             self.currentWord = ""
-        elif decoded_message == "R":
+        elif decoded_message == "O":
             print("Move R")
             move_shark_right()
             self.currentWord = ""
+
