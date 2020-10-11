@@ -2,6 +2,7 @@ import argparse
 
 from Src.CameraModuls import *
 from Src.MorseCode import *
+from Src.MorseCodeAdaptive import MorseDecoderAdaptive
 
 
 def flash_circles(current_frame):
@@ -104,20 +105,27 @@ def green_area(current_frame):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='This program receives text in Morse encoding via optic transmission.')
     parser.add_argument('-d', '--device', type=int, help='Code of the video device to use as input.', default=0)
-    parser.add_argument('-g', '--green', action='store_true', help='Use green color pulse detection method.', default=False)
-    parser.add_argument('-gt', '--green_threshold', type=int, help='How much green area is needed to register a pulse', default=1000)
+    parser.add_argument('-g', '--green', action='store_true', help='Use green color pulse detection method.',
+                        default=False)
+    parser.add_argument('-gt', '--green_threshold', type=int, help='How much green area is needed to register a pulse',
+                        default=1000)
     parser.add_argument('-c1', '--circle_p1', type=int, help='Flash circle detector parameter 1', default=60)
     parser.add_argument('-c2', '--circle_p2_threshold', type=int,
                         help='Flash circle detector parameter 2 (lower value = more detections)', default=12)
     parser.add_argument('-w', '--memory_weight_decrease', help='How fast are older flash circle detections forgotten',
                         default=3, type=int)
-    parser.add_argument('-m', '--memory_buffer_size', help='How many old flash circle detections are kept in the memory',
+    parser.add_argument('-m', '--memory_buffer_size',
+                        help='How many old flash circle detections are kept in the memory',
                         default=10, type=int)
     parser.add_argument('-l', '--mlong', type=int, help='Morse long pulse length in frames', default=10)
     parser.add_argument('-s', '--mshort', type=int, help='Morse short pulse length in frames', default=5)
     parser.add_argument('-b', '--mblank', type=int, help='Morse gap between pulses, length in frames', default=10)
+    parser.add_argument('-a', '--adaptive_morse', action='store_true', help='Use adaptive morse decoder', default=False)
+    parser.add_argument('-am', '--adaptive_morse_min_pulse', type=int,
+                        help='Minimum pulse length in frames for adaptive decoder', default=2)
     parser.add_argument('--circle_brightness', type=int,
-                        help='How bright has to be a light to be detected as a flash cirle (from 0 to 255)', default=230)
+                        help='How bright has to be a light to be detected as a flash cirle (from 0 to 255)',
+                        default=230)
 
     args = parser.parse_args()
 
@@ -128,6 +136,8 @@ if __name__ == '__main__':
     debug = True
     use_green_color_detection = args.green
     use_box_area_average = False
+    use_adaptive_decoder = args.adaptive_morse
+    adaptive_decoder_min_pulse_length = args.adaptive_morse_min_pulse
     box_size = 60
     w = h = box_size
 
@@ -149,7 +159,7 @@ if __name__ == '__main__':
     memory_weight_decrease = args.memory_weight_decrease
     circle_brightness_threshold = args.circle_brightness
 
-    decoder = MorseDecoder(args.mlong, args.mshort, args.mblank)
+    decoder = MorseDecoderAdaptive(min_pulse_length=adaptive_decoder_min_pulse_length) if use_adaptive_decoder else MorseDecoder(args.mlong, args.mshort, args.mblank)
 
     # If didn't detect camera
     if not capture.isOpened:
@@ -168,6 +178,11 @@ if __name__ == '__main__':
             green_area(current_frame)
         else:
             flash_circles(current_frame)
+
+        if debug and use_adaptive_decoder:
+            print('\r', end='')
+            print(decoder.Get_Message(debug), end='')
+
 
         # Exits when pressed ESC
         if cv2.waitKey(1) == 27:
