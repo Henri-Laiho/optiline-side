@@ -4,9 +4,9 @@ from Src.CameraModuls import *
 from Src.MorseCode import *
 from Src.MorseCodeAdaptive import MorseDecoderAdaptive
 
-
 def flash_circles(current_frame):
     global skipped_outliers, avg_circle, debug, box_size, buffer_size, tx_pos_buffer, skips_to_forget_buffer, outlier_distance, decoder, circle_detector_p1, circle_detector_p2_threshold, circle_max_radius, memory_weight_decrease
+    global frame_buffer, frame_buffer_interval, frame_buffer_size, frame_number, avg_frame
 
     # At first, we turn it into a blur
     blurred_gray_image = blur_image(Frame=current_frame)
@@ -16,6 +16,25 @@ def flash_circles(current_frame):
 
     # Then we put the blur back on
     blur = median_blur_image(Frame=threshed_gray_image)
+
+    if use_fading:
+        if avg_frame is None:
+            avg_frame = blur
+
+        frame_number += 1
+        if frame_number % frame_buffer_interval == 0:
+            frame_buffer.append(blur)
+            if len(frame_buffer) > frame_buffer_size:
+                frame_buffer.pop(0)
+
+            avg_frame = cv2.addWeighted(frame_buffer[0], 0, frame_buffer[0], 0, 0)
+            for i in range(len(frame_buffer)):
+                avg_frame = cv2.addWeighted(avg_frame, 1, frame_buffer[i], 1/(len(frame_buffer)+1), 0)
+            cv2.imshow("avg", avg_frame)
+            _, avg_frame = threshold_image(avg_frame, 192)
+
+        blur = cv2.subtract(blur, avg_frame)
+
 
     # Finds all circles
     circles = get_all_circles(blur, circle_detector_p1=circle_detector_p1,
@@ -30,6 +49,13 @@ def flash_circles(current_frame):
         new_circles = np.uint16(np.around(circles))
         for circle in new_circles[0, :]:
             x, y, r = circle
+
+            if x < blur.shape[0] and y < blur.shape[1]:
+                if blur[y, x] < 255 / 2:
+                    continue
+            else:
+                continue
+
             current_frame = cv2.circle(current_frame, (x, y), r, blue, 2)
 
             # Record it for averaging
@@ -126,6 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('--circle_brightness', type=int,
                         help='How bright has to be a light to be detected as a flash cirle (from 0 to 255)',
                         default=230)
+    parser.add_argument('-f', '--no_fade', action='store_true', help='Use adaptive morse decoder', default=False)
 
     args = parser.parse_args()
 
@@ -151,6 +178,14 @@ if __name__ == '__main__':
     skips_to_forget_buffer = 5
     avg_circle = (0, 0, 0)
 
+    # Fade still objects
+    use_fading = not args.no_fade
+    frame_buffer = []
+    frame_buffer_interval = 4
+    frame_buffer_size = 25
+    frame_number = 0
+    avg_frame = None
+
     # Averaging - arguments
     buffer_size = args.memory_buffer_size
     circle_detector_p1 = args.circle_p1
@@ -165,6 +200,9 @@ if __name__ == '__main__':
     if not capture.isOpened:
         print('[-] Unable to open camera')
         exit(1)
+
+    print("Getting framerate...", end='')
+    print("\rFramerate is %f" % get_framerate(capture))
 
     while True:
         # Gets current frame from camera

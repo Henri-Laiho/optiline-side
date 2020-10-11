@@ -1,13 +1,15 @@
 import cv2
 import numpy as np
+import time
 
-default_window_name = "DEFAULT_NAME"
-square_size_big = 30
-square_size_small = 20
 blue = (255, 0, 0)
 red = (0, 0, 255)
 green = (0, 255, 0)
-thickness = 2
+
+# Framerate calculation
+framerate = None
+frames_to_capture = 120
+frames_captured = 0
 
 
 def blur_image(Frame):
@@ -66,3 +68,15 @@ def is_outlier(tx_pos, new_circle, threshold):
     distance = np.linalg.norm(np.subtract(tx_pos[:2], new_circle[:2]))
     # print(distance)
     return distance > threshold
+
+
+def get_framerate(capture):
+    global framerate
+    if framerate is None:
+        start = time.time()
+        for i in range(frames_to_capture):
+            capture.read()
+        end = time.time()
+        seconds = end - start
+        framerate = frames_to_capture / seconds
+    return framerate
