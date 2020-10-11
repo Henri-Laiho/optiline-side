@@ -9,12 +9,6 @@ red = (0, 0, 255)
 green = (0, 255, 0)
 thickness = 2
 
-# Averaging Arguments
-circle_detector_p1 = 60
-circle_detector_p2_threshold = 12
-circle_max_radius = 300
-memory_weight_decrease = 3
-
 
 def blur_image(Frame):
     """
@@ -40,14 +34,14 @@ def median_blur_image(Frame, BlurRatio=37):
     return cv2.medianBlur(Frame, BlurRatio)
 
 
-def get_all_circles(Frame, min_radius=2):
+def get_all_circles(Frame, circle_detector_p1, circle_detector_p2_threshold, circle_max_radius, min_radius=2):
     return cv2.HoughCircles(Frame,
                             cv2.HOUGH_GRADIENT, 1, 20,
                             param1=circle_detector_p1, param2=circle_detector_p2_threshold, minRadius=min_radius,
                             maxRadius=circle_max_radius)
 
 
-def circle_memory_buffer(tx_pos_buffer, avg_circle, Frame, Draw=False):
+def circle_memory_buffer(tx_pos_buffer, avg_circle, Frame, memory_weight_decrease, Draw=False):
     """
     Find average of the circle memory buffer
     :rtype: object -> tx_pos_buffer
