@@ -102,15 +102,8 @@ void k(){
   }
   
 void loop() {
-  m();
+  s();
   delay(2000);
-  a();
+  o();
   delay(2000);
-  r();
-  delay(2000);
-  d();
-  delay(2000);
-  u();
-  delay(2000);
-  k();
-}
+ }
